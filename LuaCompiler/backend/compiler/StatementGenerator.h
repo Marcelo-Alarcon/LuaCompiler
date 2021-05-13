@@ -43,7 +43,7 @@ public:
      * Emit code for a function call statement.
      * @param ctx the FunctionCallContext.
      */
-    void emitFunctionCall(LuaParser::FunctioncallContext *ctx);
+    void emitFunctionCall(LuaParser::FunctioncallContext *ctx, SymtabEntry *ptr);
 
     /**
      * Emit code for a WRITE statement.
@@ -57,14 +57,13 @@ private:
 //    /**
 //     * Emit a call to a procedure or a function.
 //     * @param routineId the routine name's symbol table entry.
-//     * @param argListCtx the ArgumentListContext.
 //     */
-    void emitCall(SymtabEntry *routineId, LuaParser::ArgsContext *argListCtx);
+    void emitCall(SymtabEntry *routineId);
 
     /**
      * Emit code for a call to PRINT
      * @param argsCtx the print arguments context.
-     * @param needLF true if need a line feed.
+
      */
     void emitWrite(LuaParser::PrintArgumentsContext *argsCtx);
 
@@ -74,7 +73,7 @@ private:
      * @param format the format string to create.
      * @return the count of expression arguments.
      */
-    int createWriteFormat(LuaParser::PrintArgumentsContext *argsCtx, string& format, bool needLF);
+    int createWriteFormat(LuaParser::PrintArgumentsContext *argsCtx, string& format);
 
     /**
      * Emit the print arguments array.

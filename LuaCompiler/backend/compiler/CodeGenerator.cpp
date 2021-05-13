@@ -477,7 +477,7 @@ void CodeGenerator::emitRangeCheck(Typespec *targetType)
 string CodeGenerator::typeDescriptor(SymtabEntry *id)
 {
     Typespec *type = id->getType();
-    return type != nullptr ? typeDescriptor(type) : "V";
+    return type != nullptr ? typeDescriptor(type) : "I";
 }
 
 string CodeGenerator::typeDescriptor(Typespec *LuaType)

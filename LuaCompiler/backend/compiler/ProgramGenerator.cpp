@@ -14,13 +14,7 @@ using namespace std;
 
 void ProgramGenerator::emitProgram(LuaParser::ChunkContext *ctx)
 {
-	/*
-    programId = ctx->programHeader()->programIdentifier()->entry;
-    Symtab *programSymtab = programId->getRoutineSymtab();
-
     localVariables = new LocalVariables(programLocalsCount);
-
-    emitRecords(programSymtab);
 
     emitDirective(CLASS_PUBLIC, programName);
     emitDirective(SUPER, "java/lang/Object");
@@ -29,18 +23,16 @@ void ProgramGenerator::emitProgram(LuaParser::ChunkContext *ctx)
     emitInputScanner();
     emitConstructor();
 
-    int num_of_declarations = ctx->block()->declarations()->declaration().size();
+    int chunk_nodes = ctx->block()->children.size();
 
-    for(int i = 0; i < num_of_declarations; i++){
-    	if(ctx->block()->declarations()->declaration()[i]->routineDefinition() != nullptr){
-    		emitRoutine(ctx->block()->declarations()->declaration()[i]->routineDefinition());
+    for (int i=0; i<chunk_nodes; i++){
+    	if (ctx->block()->stat(i)->functiondef() != nullptr){
+    		emitRoutine(ctx->block()->stat(i)->functiondef());
+    		programFuncCount++;
     	}
     }
 
-    //emitSubroutines(ctx->block()->declarations()->routinesPart());
-
     emitMainMethod(ctx);
-    */
 }
 
 void ProgramGenerator::emitProgramVariables()
@@ -107,22 +99,8 @@ void ProgramGenerator::emitConstructor()
     localStack->reset();
 }
 
-//void ProgramGenerator::emitSubroutines(EnglishParser::RoutinesPartContext *ctx)
-//{
-//    if (ctx != nullptr)
-//    {
-//        for (EnglishParser::RoutineDefinitionContext *defnCtx :
-//                                                    ctx->routineDefinition())
-//        {
-//            compiler = new Compiler(compiler);
-//            compiler->visit(defnCtx);
-//        }
-//    }
-//}
-
 void ProgramGenerator::emitMainMethod(LuaParser::ChunkContext *ctx)
 {
-	/*
     emitLine();
     emitComment("MAIN");
     emitDirective(METHOD_PUBLIC_STATIC,
@@ -130,50 +108,10 @@ void ProgramGenerator::emitMainMethod(LuaParser::ChunkContext *ctx)
 
     emitMainPrologue(programId);
 
-    // Emit code to allocate any arrays, records, and strings.
-    StructuredDataGenerator structureCode(this, compiler);
-    structureCode.emitData(programId);
-
-    // Emit code for the compound statement.
     emitLine();
-    // compiler->visit(ctx->block()->compoundStatement());
+    compiler->visit(ctx->block());
 
-    // is there function calls?
-    bool has_routine = false;
-
-    int max_local_vars = 0;
-    int num_declarations = ctx->block()->declarations()->declaration().size();
-    int num_parameters = 0;
-
-    for(int i = 0; i < num_declarations; i++){
-    	if(ctx->block()->declarations()->declaration()[i]->routineDefinition() != nullptr){
-    		has_routine = true;
-    	}
-    }
-
-    if(has_routine){
-    	for(int i = 0; i < num_declarations; i++){
-			if(ctx->block()->declarations()->declaration()[i]->routineDefinition() != nullptr){
-				if(ctx->block()->declarations()->declaration()[i]->routineDefinition()->functionHead() != nullptr){
-					num_parameters = ctx->block()->declarations()->declaration()[i]->routineDefinition()->functionHead()->parameters()->parameterDeclarationsList()->parameterDeclaration().size();
-					if(num_parameters > max_local_vars){
-						max_local_vars = num_parameters;
-					}
-				}
-				else {
-					num_parameters = ctx->block()->declarations()->declaration()[i]->routineDefinition()->procedureHead()->parameters()->parameterDeclarationsList()->parameterDeclaration().size();
-					if(num_parameters > max_local_vars){
-						max_local_vars = num_parameters;
-					}
-				}
-			}
-		}
-    }
-
-
-
-    emitMainEpilogue(max_local_vars);
-    */
+    emitMainEpilogue(programLocalsCount);
 }
 
 void ProgramGenerator::emitMainPrologue(SymtabEntry *programId)
@@ -235,26 +173,20 @@ void ProgramGenerator::emitMainEpilogue(int max_local_vars)
 
 void ProgramGenerator::emitRoutine(LuaParser::FunctiondefContext *ctx)
 {
-	/*
-    SymtabEntry *routineId = ctx->procedureHead() != nullptr
-                            ? ctx->procedureHead()->routineIdentifier()->entry
-                            : ctx->functionHead()->routineIdentifier()->entry;
+	string routineName = ctx->funcname()->getText();
+    SymtabEntry *routineId = programId->getRoutineSymtab()->lookup(routineName);
     Symtab *routineSymtab = routineId->getRoutineSymtab();
 
     emitRoutineHeader(routineId);
     emitRoutineLocals(routineId);
-
     localVariables = new LocalVariables(routineSymtab->getMaxSlotNumber());
 
     // Emit code for the compound statement.
-    EnglishParser::CompoundStatementContext *stmtCtx = (EnglishParser::CompoundStatementContext *) routineId->getExecutable();
-    compiler->visit(stmtCtx);
-
-
+    LuaParser::BlockContext *blockCtx = (LuaParser::BlockContext *) routineId->getExecutable();
+    compiler->visit(blockCtx);
 
     emitRoutineReturn(routineId);
     emitRoutineEpilogue();
-    */
 }
 
 void ProgramGenerator::emitRoutineHeader(SymtabEntry *routineId)

@@ -62,27 +62,15 @@ public:
 	Object visitAssignStat(LuaParser::AssignStatContext *ctx) override;
 	Object visitRepeatStat(LuaParser::RepeatStatContext *ctx) override;
 	Object visitPrintStat(LuaParser::PrintStatContext *ctx) override;
-	Object visitPrintArguments(LuaParser::PrintArgumentsContext *ctx) override;
 	Object visitIfStat(LuaParser::IfStatContext *ctx) override;
-	Object visitFuncname(LuaParser::FuncnameContext *ctx) override;
-	Object visitNamelist(LuaParser::NamelistContext *ctx) override;
 	Object visitExplist(LuaParser::ExplistContext *ctx) override;
 	Object visitExp(LuaParser::ExpContext *ctx) override;
 	Object visitPrefixexp(LuaParser::PrefixexpContext *ctx) override;
 	Object visitFunctioncall(LuaParser::FunctioncallContext *ctx) override;
 	Object visitVarOrExp(LuaParser::VarOrExpContext *ctx) override;
 	Object visitVar_(LuaParser::Var_Context *ctx) override;
-	Object visitVarSuffix(LuaParser::VarSuffixContext *ctx) override;
 	Object visitNameAndArgs(LuaParser::NameAndArgsContext *ctx) override;
-	Object visitArgs(LuaParser::ArgsContext *ctx) override;
-	Object visitFunctiondef(LuaParser::FunctiondefContext *ctx) override;
-	Object visitFuncbody(LuaParser::FuncbodyContext *ctx) override;
 	Object visitParlist(LuaParser::ParlistContext *ctx) override;
-	Object visitOperatorOr(LuaParser::OperatorOrContext *ctx) override;
-	Object visitOperatorAnd(LuaParser::OperatorAndContext *ctx) override;
-	Object visitOperatorComparison(LuaParser::OperatorComparisonContext *ctx) override;
-	Object visitOperatorAddSub(LuaParser::OperatorAddSubContext *ctx) override;
-	Object visitOperatorMulDiv(LuaParser::OperatorMulDivContext *ctx) override;
 	Object visitNumber(LuaParser::NumberContext *ctx) override;
 	Object visitString(LuaParser::StringContext *ctx) override;
 private:
@@ -92,7 +80,7 @@ private:
      */
     void createNewGenerators(CodeGenerator *parentGenerator)
     {
-        programCode    = new ProgramGenerator(parentGenerator, this);
+        programCode    = new ProgramGenerator(parentGenerator, this, programId);
         statementCode  = new StatementGenerator(programCode, this);
         expressionCode = new ExpressionGenerator(programCode, this);
     }

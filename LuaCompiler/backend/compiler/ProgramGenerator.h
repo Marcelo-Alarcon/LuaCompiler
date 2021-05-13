@@ -10,16 +10,18 @@ class ProgramGenerator : public CodeGenerator
 private:
     SymtabEntry *programId;  // symbol table entry of the program name
     int programLocalsCount;  // count of program local variables
+    int programFuncCount; 	 // count of program function definitions
 
 public:
     /*
      * Constructor.
      * @param the parent generator.
      * @param compiler the compiler to use.
+     * @param the program id of the program to generate code for
      */
-    ProgramGenerator(CodeGenerator *parent, Compiler *compiler)
+    ProgramGenerator(CodeGenerator *parent, Compiler *compiler, SymtabEntry *pid)
         : CodeGenerator(parent, compiler),
-          programId(nullptr), programLocalsCount(5) // 5 because _elapsed is long
+          programId(pid), programLocalsCount(5), programFuncCount(0) // 5 because _elapsed is long
     {
         localStack = new LocalStack();
     }

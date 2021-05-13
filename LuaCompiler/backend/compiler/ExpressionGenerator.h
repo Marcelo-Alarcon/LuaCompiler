@@ -2,6 +2,7 @@
 #define EXPRESSIONGENERATOR_H_
 
 #include "CodeGenerator.h"
+#include "LuaBaseVisitor.h"
 
 namespace backend { namespace compiler {
 
@@ -22,19 +23,12 @@ public:
      */
     void emitExpression(LuaParser::ExpContext *ctx);
 
-    /*
-     * Emit code to load a scalar variable's value
-     * or a structured variable's address.
-     * @param ctx the VariableContext.
-     */
-    void emitLoadValue(LuaParser::Var_Context *varCtx);
-
     /**
      * Emit code to load a scalar variable's value
      * or a structured variable's address.
      * @param variableNode the variable node.
      */
-    Typespec *emitLoadVariable(LuaParser::Var_Context *varCtx);
+    Typespec *emitLoadVariable(LuaParser::Var_Context *varCtx, SymtabEntry *ptr);
 
     /**
      * Emit code to load an integer constant.
