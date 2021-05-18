@@ -8,7 +8,7 @@ namespace backend { namespace compiler {
 class ProgramGenerator : public CodeGenerator
 {
 private:
-    SymtabEntry *programId;  // symbol table entry of the program name
+    SymtabEntry *programId;  // symbol table entry of the main program
     int programLocalsCount;  // count of program local variables
     int programFuncCount; 	 // count of program function definitions
 

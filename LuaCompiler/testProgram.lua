@@ -19,8 +19,7 @@ function testData(in1, in2)
 	end
 end
 
-result = testData(6, 4)
+result1 = testData(6, 4)
+result2 = testData(4, 6)
 print("TEST")
-print(testData(6, 4))
-print(result)
-print(testData(1, 0))
+print(testData(result, result2))

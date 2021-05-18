@@ -18,20 +18,20 @@ using namespace intermediate;
 
 void StatementGenerator::emitAssignment(LuaParser::AssignStatContext *ctx)
 {
-    LuaParser::Var_Context *varCtx  = ctx->var_();
+	emitComment("ASSIGNMENT");
     LuaParser::ExpContext *exprCtx = ctx->exp();
-    SymtabEntry *varId;
+    SymtabEntry *varId = ctx->var_()->entry;
 
     // Emit code to evaluate the expression.
     compiler->visit(exprCtx);
 
     // Emit code to store the expression value into the target variable.
-    emitStoreValue(varId, varId->getType());
-
+    emitStoreValue(varId, Predefined::numberType);
 }
 
 void StatementGenerator::emitIf(LuaParser::IfStatContext *ctx)
 {
+	emitComment("IF");
 	int num_of_expressions = ctx->exp().size();
 	bool hasElse = (ctx->block().size() == num_of_expressions+1);
 
@@ -39,11 +39,15 @@ void StatementGenerator::emitIf(LuaParser::IfStatContext *ctx)
 	Label *falseLabel = new Label();
 
 	for (int i=0; i<num_of_expressions; i++){
+		if (i>0)
+			emitComment("ELSE IF");
 		compiler->visit(ctx->exp(i));
 		emit(IFEQ, falseLabel);
 		compiler->visit(ctx->block(i));
+		emitLabel(falseLabel);
 	}
 	if (hasElse){
+		emitComment("ELSE");
 		emit(GOTO, trueLabel);
 		emitLabel(falseLabel);
 		compiler->visit(ctx->block(num_of_expressions));
@@ -54,13 +58,15 @@ void StatementGenerator::emitIf(LuaParser::IfStatContext *ctx)
 
 void StatementGenerator::emitRepeat(LuaParser::RepeatStatContext *ctx)
 {
+	emitComment("REPEAT");
     Label *loopTopLabel  = new Label();
     Label *loopExitLabel = new Label();
 
     emitLabel(loopTopLabel);
 
-    compiler->visit(ctx->block());
-    compiler->visit(ctx->exp());
+    compiler->visitBlock(ctx->block());
+    emitComment("UNTIL");
+    compiler->visitExp(ctx->exp());
     emit(IFNE, loopExitLabel);
     emit(GOTO, loopTopLabel);
 
@@ -69,22 +75,21 @@ void StatementGenerator::emitRepeat(LuaParser::RepeatStatContext *ctx)
 
 void StatementGenerator::emitFunctionCall(LuaParser::FunctioncallContext *ctx, SymtabEntry* functionId)
 {
+	emitComment("FUNCTION CALL");
 	string name = ctx->varOrExp()->var_()->getText();
-	string arg;
-
 	bool no_args = ctx->nameAndArgs(0)->args()->explist() == nullptr;
-
-
 	string call = programName + "/" + name;
+
 	if(no_args){
 		call = call + "()";
 		call = call + typeDescriptor(functionId);
+		cout << "invoking static\n";
 		emit(INVOKESTATIC, call);
 		return;
 	}
 
-	emitCall(functionId);
 
+	emitCall(functionId);
 }
 
 void StatementGenerator::emitCall(SymtabEntry *routineId)
@@ -95,12 +100,11 @@ void StatementGenerator::emitCall(SymtabEntry *routineId)
 
     if (parmIds != nullptr)
     {
-        for (SymtabEntry *parmId : *parmIds)
+        for (long unsigned int i=0; i< parmIds->size(); i++)
         {
-            call += typeDescriptor(parmId);
+            call += typeDescriptor(routineId);
         }
     }
-
 
     call = call + ")";
     call = call + typeDescriptor(routineId);
@@ -110,6 +114,7 @@ void StatementGenerator::emitCall(SymtabEntry *routineId)
 
 void StatementGenerator::emitWrite(LuaParser::PrintStatContext *ctx)
 {
+	emitComment("PRINT");
     emitWrite(ctx->printArguments());
 }
 

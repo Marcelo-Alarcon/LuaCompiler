@@ -268,7 +268,7 @@ void CodeGenerator::emitLoadConstant(string value)
 
 void CodeGenerator::emitLoadValue(SymtabEntry *variableId)
 {
-    Typespec *type = variableId->getType()->baseType();
+    Typespec *type = Predefined::numberType;
     Kind kind = variableId->getKind();
     int nestingLevel = variableId->getSymtab()->getNestingLevel();
 
@@ -294,6 +294,7 @@ void CodeGenerator::emitLoadValue(SymtabEntry *variableId)
     // Program variable.
     else if (nestingLevel == 1)
     {
+    	cout << "Here\n";
         string variableName = variableId->getName();
         string name = programName + "/" + variableName;
         emit(GETSTATIC, name, typeDescriptor(type));
@@ -348,7 +349,7 @@ void CodeGenerator::emitLoadLocal(Typespec *type, int index)
 
 void CodeGenerator::emitStoreValue(SymtabEntry *targetId, Typespec *targetType)
 {
-    if (targetId == nullptr)
+    if (targetId != nullptr)
     {
         emitStoreToUnmodifiedVariable(targetId, targetType);
     }

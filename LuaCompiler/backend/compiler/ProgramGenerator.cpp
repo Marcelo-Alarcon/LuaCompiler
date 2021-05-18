@@ -23,13 +23,11 @@ void ProgramGenerator::emitProgram(LuaParser::ChunkContext *ctx)
     emitInputScanner();
     emitConstructor();
 
-    int chunk_nodes = ctx->block()->children.size();
+    int i = 0;
 
-    for (int i=0; i<chunk_nodes; i++){
-    	if (ctx->block()->stat(i)->functiondef() != nullptr){
-    		emitRoutine(ctx->block()->stat(i)->functiondef());
-    		programFuncCount++;
-    	}
+    while (ctx->block()->stat(i)->functiondef() != nullptr){
+    	emitRoutine(ctx->block()->stat(i)->functiondef());
+    	i++;
     }
 
     emitMainMethod(ctx);
@@ -38,7 +36,6 @@ void ProgramGenerator::emitProgram(LuaParser::ChunkContext *ctx)
 void ProgramGenerator::emitProgramVariables()
 {
     // Runtime timer and standard in.
-
     Symtab *symtab = programId->getRoutineSymtab();
     vector<SymtabEntry *> ids = symtab->sortedEntries();
 
@@ -107,10 +104,14 @@ void ProgramGenerator::emitMainMethod(LuaParser::ChunkContext *ctx)
                               "main([Ljava/lang/String;)V");
 
     emitMainPrologue(programId);
-
     emitLine();
-    compiler->visit(ctx->block());
 
+    for (long unsigned int i=0; i<ctx->block()->children.size(); i++){
+    	if (ctx->block()->stat(i)->functiondef() == nullptr)
+    		compiler->visitChildren(ctx->block()->stat(i));
+    }
+
+    emitComment("END MAIN");
     emitMainEpilogue(programLocalsCount);
 }
 
@@ -185,6 +186,7 @@ void ProgramGenerator::emitRoutine(LuaParser::FunctiondefContext *ctx)
     LuaParser::BlockContext *blockCtx = (LuaParser::BlockContext *) routineId->getExecutable();
     compiler->visit(blockCtx);
 
+
     emitRoutineReturn(routineId);
     emitRoutineEpilogue();
 }
@@ -192,30 +194,13 @@ void ProgramGenerator::emitRoutine(LuaParser::FunctiondefContext *ctx)
 void ProgramGenerator::emitRoutineHeader(SymtabEntry *routineId)
 {
     string routineName = routineId->getName();
-    vector<SymtabEntry *> *parmIds = routineId->getRoutineParameters();
+
     string header(routineName + "(");
-
-    // Parameter and return type descriptors.
-    if (parmIds != nullptr)
-    {
-        for (SymtabEntry *parmId : *parmIds)
-        {
-            header += typeDescriptor(parmId);
-        }
-    }
     header += ")" + typeDescriptor(routineId);
-
     emitLine();
-    if (routineId->getKind() == FUNCTION)
-    {
-        emitComment("PROCEDURE " + routineName);
-    }
-    else
-    {
-        emitComment("FUNCTION " + routineName);
-    }
-
+    emitComment("FUNCTION " + routineName);
     emitDirective(METHOD_PRIVATE_STATIC, header);
+
 }
 
 void ProgramGenerator::emitRoutineLocals(SymtabEntry *routineId)
@@ -233,8 +218,8 @@ void ProgramGenerator::emitRoutineLocals(SymtabEntry *routineId)
 
         if ((kind == VARIABLE) || (kind == TYPE))
         {
-            int slot = id->getSlotNumber();
-            emitDirective(VAR, to_string(slot) + " is " + id->getName(),
+            int i = 0;
+            emitDirective(VAR, (i++) + " is " + id->getName(),
                           typeDescriptor(id));
         }
     }

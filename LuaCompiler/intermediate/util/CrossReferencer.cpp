@@ -117,9 +117,6 @@ void CrossReferencer::printEntry(SymtabEntry *entry,
     cout << INDENT << "Defined as: " << KIND_STRINGS[(int) kind] << endl;
     cout << INDENT << "Scope nesting level: " << nestingLevel << endl;
 
-    // Print the type specification.
-    Typespec *type = entry->getType();
-    printType(type);
 }
 
 void CrossReferencer::printType(Typespec *typespec) const

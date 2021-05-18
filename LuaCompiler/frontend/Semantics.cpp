@@ -49,9 +49,9 @@ Object Semantics::visitChunk(LuaParser::ChunkContext *ctx){
 
 	CrossReferencer crossReferencer;
 	crossReferencer.print(symtabStack);
-
 	return nullptr;
 }
+
 Object Semantics::visitBlock(LuaParser::BlockContext *ctx){
 	visitChildren(ctx);
 	return nullptr;
@@ -66,7 +66,7 @@ Object Semantics::visitRetstat(LuaParser::RetstatContext *ctx){
 	return visit(ctx->exp());
 }
 Object Semantics::visitAssignStat(LuaParser::AssignStatContext *ctx){
-	visit(ctx->var_());
+	visitVar_(ctx->var_());
 	visit(ctx->exp());
 	return nullptr;
 }
@@ -94,9 +94,6 @@ Object Semantics::visitFuncname(LuaParser::FuncnameContext *ctx){
 	return ctx->getText();
 }
 
-Object Semantics::visitNamelist(LuaParser::NamelistContext *ctx){
-	return ctx->getText();
-}
 Object Semantics::visitExplist(LuaParser::ExplistContext *ctx){
 	visitChildren(ctx);
 	return nullptr;
@@ -110,38 +107,49 @@ Object Semantics::visitPrefixexp(LuaParser::PrefixexpContext *ctx){
 	return nullptr;
 }
 Object Semantics::visitFunctioncall(LuaParser::FunctioncallContext *ctx){
+	string funcName = ctx->varOrExp()->var_()->getText();
+	SymtabEntry *func = symtabStack->lookup(funcName);
+	Symtab *tmp = func->getRoutineSymtab();
+
+	SymtabEntry *ptr = nullptr;
+	vector<SymtabEntry *> entries = tmp->sortedEntries();
+
+	for (long unsigned int i=0; i<entries.size(); i++){
+		if (entries[i]->getName() == "testData")
+			ptr = entries[i];
+	}
+	func->setRoutineParameters(ptr->getRoutineParameters());
 	visitChildren(ctx);
 	return nullptr;
 }
 Object Semantics::visitVarOrExp(LuaParser::VarOrExpContext *ctx){
 	if (ctx->var_() != nullptr)
-		visit(ctx->var_());
+		visitVar_(ctx->var_());
 	else {
 		if (ctx->exp() != nullptr)
-			visit(ctx->exp());
+			visitExp(ctx->exp());
 	}
 	return nullptr;
 }
+
 Object Semantics::visitVar_(LuaParser::Var_Context *ctx){
 	string name = ctx->NAME()->getText();
 	SymtabEntry *varId = symtabStack->lookupLocal(name);
-	int lineNum = ctx->getStart()->getLine();
 
+	int lineNum = ctx->getStart()->getLine();
 	if (varId == nullptr){
 		varId = symtabStack->enterLocal(name, VARIABLE);
-		varId->setType(Predefined::nilType);
-	} else {
-		if (varId->getKind() == FUNCTION)
-			return nullptr;
+		varId->setType(Predefined::numberType);
 	}
+	ctx->entry = varId;
+
+	if (varId->getKind() == FUNCTION)
+		return nullptr;
+
 	varId->appendLineNumber(lineNum);
 	return nullptr;
 }
 
-Object Semantics::visitVarSuffix(LuaParser::VarSuffixContext *ctx){
-	visitChildren(ctx);
-	return nullptr;
-}
 Object Semantics::visitNameAndArgs(LuaParser::NameAndArgsContext *ctx){
 	visitChildren(ctx);
 	return nullptr;
@@ -153,7 +161,7 @@ Object Semantics::visitArgs(LuaParser::ArgsContext *ctx){
 Object Semantics::visitFunctiondef(LuaParser::FunctiondefContext *ctx){
 	string functionName = ctx->funcname()->getText();
 	SymtabEntry *functionId = symtabStack->lookupLocal(functionName);
-	LuaParser::ParlistContext *parameters = ctx->funcbody()->parlist();
+	LuaParser::ParlistContext *parameterList = ctx->funcbody()->parlist();
 
 	if (functionId != nullptr){
 		error.flag(REDECLARED_IDENTIFIER, ctx->getStart()->getLine(), functionName);
@@ -171,25 +179,29 @@ Object Semantics::visitFunctiondef(LuaParser::FunctiondefContext *ctx){
 		functionId->setRoutineSymtab(symtabStack->push());
 		Symtab *localSymtab = symtabStack->getLocalSymtab();
 		localSymtab->setOwner(functionId);
+		vector<SymtabEntry *> parameterIds;
 
-		if (parameters != nullptr){
-			vector<SymtabEntry *> parameterIds;
+		if (parameterList != nullptr){
 
-			for (unsigned long int i=0; i<parameters->namelist()->children.size(); i++){
+			for (unsigned long int i=0; i<parameterList->varlist()->var_().size(); i++){
 
-				string name = parameters->namelist()->children[i]->getText();
-				if (name != ","){
-					SymtabEntry *newEntry = symtabStack->enterLocal(name, VALUE_PARAMETER);
-					parameterIds.push_back(newEntry);
-					newEntry->setSlotNumber(localSymtab->nextSlotNumber());
-				}
+				string name = parameterList->varlist()->var_(i)->getText();
+				SymtabEntry *newEntry = symtabStack->enterLocal(name, VALUE_PARAMETER);
+				newEntry->setType(Predefined::numberType);
+				parameterList->varlist()->var_(i)->entry = newEntry;
+				parameterIds.push_back(newEntry);
+				newEntry->setSlotNumber(localSymtab->nextSlotNumber());
+
 			}
 			functionId->setRoutineParameters(&parameterIds);
 		}
 
-		visit(ctx->funcbody());
-		functionId->setExecutable(ctx->funcbody()->block());
+		SymtabEntry *assocVarId = symtabStack->enterLocal(functionName, VARIABLE);
+		assocVarId->setSlotNumber(localSymtab->nextSlotNumber());
+		assocVarId->setType(Predefined::numberType);
 
+		visitChildren(ctx->funcbody()->block());
+		functionId->setExecutable(ctx->funcbody()->block());
 		symtabStack->pop();
 		return nullptr;
 	}
@@ -200,7 +212,7 @@ Object Semantics::visitFuncbody(LuaParser::FuncbodyContext *ctx){
 	return nullptr;
 }
 Object Semantics::visitParlist(LuaParser::ParlistContext *ctx){
-	string params = visit(ctx->namelist());
+	visit(ctx->varlist());
 	return nullptr;
 }
 Object Semantics::visitOperatorOr(LuaParser::OperatorOrContext *ctx){

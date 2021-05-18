@@ -28,7 +28,7 @@ public:
      * or a structured variable's address.
      * @param variableNode the variable node.
      */
-    Typespec *emitLoadVariable(LuaParser::Var_Context *varCtx, SymtabEntry *ptr);
+    Typespec *emitLoadVariable(LuaParser::Var_Context *varCtx);
 
     /**
      * Emit code to load an integer constant.

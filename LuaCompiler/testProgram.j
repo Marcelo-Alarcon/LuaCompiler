@@ -2,7 +2,9 @@
 .super java/lang/Object
 
 .field private static _sysin Ljava/util/Scanner;
-.field private static result V
+.field private static result I
+.field private static result1 I
+.field private static result2 I
 
 ;
 ; Runtime input scanner
@@ -35,6 +37,125 @@
 .end method
 
 ;
+; FUNCTION testData
+;
+.method private static testData()I
+
+.var  is testData I
+.var  is x I
+.var  is y I
+.var  is z I
+;
+; ASSIGNMENT
+;
+	iload_0
+	istore_0
+;
+; ASSIGNMENT
+;
+	iload_1
+	istore_0
+;
+; ASSIGNMENT
+;
+	iconst_0
+	istore_0
+;
+; REPEAT
+;
+L001:
+;
+; ASSIGNMENT
+;
+	iload_0
+	iconst_4
+	iconst_2
+	imul
+	isub
+	istore_0
+;
+; ASSIGNMENT
+;
+	iload_0
+	iconst_2
+	idiv
+	iconst_3
+	isub
+	istore_0
+;
+; ASSIGNMENT
+;
+	iload_0
+	iconst_1
+	iadd
+	istore_0
+;
+; UNTIL
+;
+;
+; z<5
+;
+	iload_0
+	iconst_5
+	if_icmplt	L003
+	iconst_0
+	goto	L004
+L003:
+	iconst_1
+L004:
+	ifne	L002
+	goto	L001
+L002:
+;
+; IF
+;
+;
+; x<y
+;
+	iload_0
+	iload_0
+	if_icmplt	L007
+	iconst_0
+	goto	L008
+L007:
+	iconst_1
+L008:
+	ifeq	L006
+	iconst_1
+L006:
+;
+; ELSE IF
+;
+;
+; x>y
+;
+	iload_0
+	iload_0
+	if_icmpgt	L009
+	iconst_0
+	goto	L010
+L009:
+	iconst_1
+L010:
+	ifeq	L006
+	iconst_0
+L006:
+;
+; ELSE
+;
+	goto	L005
+L006:
+L005:
+
+	istore_2
+	iload_2
+	ireturn
+
+.limit locals 3
+.limit stack 3
+.end method
+
+;
 ; MAIN
 ;
 .method public static main([Ljava/lang/String;)V
@@ -46,72 +167,54 @@
 	invokestatic	java/time/Instant/now()Ljava/time/Instant;
 	astore_1
 
-L001:
-	iconst_0
-	goto	L004
-L003:
-	iconst_1
-L004:
-	iconst_0
-	goto	L006
-L005:
-	iconst_1
-L006:
-	iconst_0
-	goto	L008
-L007:
-	iconst_1
-L008:
-	iflt	L009
-	iconst_0
-	goto	L010
-L009:
-	iconst_1
-L010:
-	ifne	L002
-	goto	L001
-L002:
-	ifeq	L012
-	ifeq	L012
-	goto	L011
-L012:
-L011:
+;
+; ASSIGNMENT
+;
+;
+; FUNCTION CALL
+;
+	invokestatic	testProgram/testData(II)I
+	putstatic	testProgram/result1 I
+;
+; ASSIGNMENT
+;
+;
+; FUNCTION CALL
+;
+	invokestatic	testProgram/testData(II)I
+	putstatic	testProgram/result2 I
+;
+; PRINT
+;
 	getstatic	java/lang/System/out Ljava/io/PrintStream;
 	ldc	"%b\n"
 	iconst_1
 	anewarray	java/lang/Object
 	dup
 	iconst_0
+	ldc	"TEST"
 	aastore
 	invokevirtual	java/io/PrintStream/printf(Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintStream;
 	pop
+;
+; PRINT
+;
 	getstatic	java/lang/System/out Ljava/io/PrintStream;
 	ldc	"%b\n"
 	iconst_1
 	anewarray	java/lang/Object
 	dup
 	iconst_0
+;
+; FUNCTION CALL
+;
+	invokestatic	testProgram/testData(II)I
 	aastore
 	invokevirtual	java/io/PrintStream/printf(Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintStream;
 	pop
-	getstatic	java/lang/System/out Ljava/io/PrintStream;
-	ldc	"%b\n"
-	iconst_1
-	anewarray	java/lang/Object
-	dup
-	iconst_0
-	aastore
-	invokevirtual	java/io/PrintStream/printf(Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintStream;
-	pop
-	getstatic	java/lang/System/out Ljava/io/PrintStream;
-	ldc	"%b\n"
-	iconst_1
-	anewarray	java/lang/Object
-	dup
-	iconst_0
-	aastore
-	invokevirtual	java/io/PrintStream/printf(Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintStream;
-	pop
+;
+; END MAIN
+;
 
 	invokestatic	java/time/Instant/now()Ljava/time/Instant;
 	astore_2
@@ -134,6 +237,6 @@ L011:
 
 	return
 
-.limit locals 11
+.limit locals 8
 .limit stack 6
 .end method

@@ -56,6 +56,7 @@ Object Compiler::visitPrefixexp(LuaParser::PrefixexpContext *ctx){
 Object Compiler::visitFunctioncall(LuaParser::FunctioncallContext *ctx){
 	Symtab *tmp = programId->getRoutineSymtab();
 	SymtabEntry *functionId = tmp->lookup(ctx->varOrExp()->var_()->getText());
+
 	statementCode->emitFunctionCall(ctx, functionId);
 	return nullptr;
 }
@@ -68,7 +69,7 @@ Object Compiler::visitVarOrExp(LuaParser::VarOrExpContext *ctx){
 	return nullptr;
 }
 Object Compiler::visitVar_(LuaParser::Var_Context *ctx){
-	expressionCode->emitLoadVariable(ctx, programId);
+	expressionCode->emitLoadVariable(ctx);
 	return nullptr;
 }
 Object Compiler::visitNameAndArgs(LuaParser::NameAndArgsContext *ctx){

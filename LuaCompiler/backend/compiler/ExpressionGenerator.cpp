@@ -11,43 +11,64 @@ namespace backend { namespace compiler {
 
 void ExpressionGenerator::emitExpression(LuaParser::ExpContext *ctx)
 {
-    //emitSimpleExpression(simpleCtx1);
-
-    // More than one simple expression?
+    // More than one expression?
     if (ctx->children.size() > 1)
     {
-        string op = ""; //= relOpCtx->getText();
-        if (ctx->operatorComparison() != nullptr)
-        	op = ctx->operatorComparison()->getText();
+        string op = "";
+        if (ctx->operatorComparison() != nullptr){
+        	emitComment(ctx->getText());
+        	Label *trueLabel = new Label();
+			Label *exitLabel = new Label();
+			op = ctx->operatorComparison()->getText();
+			compiler->visit(ctx->exp(0)); // LHS expression
+			compiler->visit(ctx->exp(1)); // RHS expression
 
-        Label *trueLabel = new Label();
-        Label *exitLabel = new Label();
+			if      (op == "==" ) emit(IF_ICMPEQ, trueLabel);
+			else if (op == "~=")  emit(IF_ICMPNE, trueLabel);
+			else if (op == "<" )  emit(IF_ICMPLT, trueLabel);
+			else if (op == "<=")  emit(IF_ICMPLE, trueLabel);
+			else if (op == ">" )  emit(IF_ICMPGT, trueLabel);
+			else if (op == ">=")  emit(IF_ICMPGE, trueLabel);
+
+			emit(ICONST_0); // false
+			emit(GOTO, exitLabel);
+			emitLabel(trueLabel);
+			emit(ICONST_1); // true
+			emitLabel(exitLabel);
+
+			localStack->decrease(1);  // only one branch will be taken
+
+        } else if (ctx->operatorAddSub() != nullptr){
+        	op = ctx->operatorAddSub()->getText();
+        	compiler->visit(ctx->exp(0)); // LHS expression
+        	compiler->visit(ctx->exp(1)); // RHS expression
+
+        	if (op == "+")
+        		emit(IADD);
+        	else if (op == "-")
+        		emit(ISUB);
+
+        } else if (ctx->operatorMulDiv() != nullptr){
+        	op = ctx->operatorMulDiv()->getText();
+        	compiler->visit(ctx->exp(0)); // LHS expression
+        	compiler->visit(ctx->exp(1)); // RHS expression
+
+        	if (op == "*")
+        		emit(IMUL);
+        	else if (op == "/")
+        		emit(IDIV);
+        }
 
 
-		//emitSimpleExpression(simpleCtx2);
-
-		if      (op == "==" ) emit(IFEQ, trueLabel);
-		else if (op == "~=") emit(IFNE, trueLabel);
-		else if (op == "<" ) emit(IFLT, trueLabel);
-		else if (op == "<=") emit(IFLE, trueLabel);
-		else if (op == ">" ) emit(IFGT, trueLabel);
-		else if (op == ">=") emit(IFGE, trueLabel);
-
-
-        emit(ICONST_0); // false
-        emit(GOTO, exitLabel);
-        emitLabel(trueLabel);
-        emit(ICONST_1); // true
-        emitLabel(exitLabel);
-
-        localStack->decrease(1);  // only one branch will be taken
+    } else {
+    	compiler->visitChildren(ctx);
     }
 }
 
-Typespec *ExpressionGenerator::emitLoadVariable(LuaParser::Var_Context *varCtx, SymtabEntry *programId)
+Typespec *ExpressionGenerator::emitLoadVariable(LuaParser::Var_Context *varCtx)
 {
-    SymtabEntry *variableId = programId->getRoutineSymtab()->lookup(varCtx->getText());
-    Typespec *variableType = variableId->getType();
+    SymtabEntry *variableId = varCtx->entry;
+    Typespec *variableType = Predefined::numberType;
 
     // Scalar value or structure address.
     CodeGenerator::emitLoadValue(variableId);
